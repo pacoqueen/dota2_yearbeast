@@ -44,10 +44,16 @@ def get_json_data():
 
 def extract_abs_hours(history):
     """
-    Only extract hours as string for frequency table.
+    Only extract hours as minutes from 00:00 and values for that times as dict.
     """
-    # TODO: PORASQUI.
-    return history
+    fhs = {}
+    for fechahora in history:
+        minutos = (fechahora.hour * 60) + fechahora.minute
+        try:
+            fhs[minutos] += 1
+        except KeyError:
+            fhs[minutos] = 1
+    return fhs
 
 def adivinar(history):
     """
@@ -59,8 +65,14 @@ def adivinar(history):
     """
     horas = extract_abs_hours(history)
     s = pd.Series(horas)
+    s.plot()
     if DEBUG:
-        print s
+        for minutes in s.keys():
+            print datetime.time(minutes / 60, minutes % 60),
+            print s[minutes]
+    plot = s.plot()
+    fig = plot.get_figure()
+    fig.savefig("graph.png")
     try:
         last_event = history.keys()[0]
         delta = last_event - history.keys()[1]
