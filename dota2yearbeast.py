@@ -34,7 +34,11 @@ def get_json_data():
     data = parse_json_data(data)
     if DEBUG:
         for fh in reversed(data.keys()):
-            print "-->", fh.strftime("%d/%m/%Y %H:%M")
+            if fh >= datetime.datetime.now(tz.tzlocal()):
+                print "==>",
+            else:
+                print "-->",
+            print fh.strftime("%d/%m/%Y %H:%M")
     return data
 
 def adivinar(history):
