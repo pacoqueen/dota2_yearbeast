@@ -55,6 +55,29 @@ def extract_abs_hours(history):
             fhs[minutos] = 1
     return fhs
 
+def analize(history):
+    horas = extract_abs_hours(history)
+    s = pd.Series(horas)
+    s.plot()
+    if DEBUG:
+        for minutes in s.keys():
+            print datetime.time(minutes / 60, minutes % 60),
+            print s[minutes]
+    #plot = s.plot()
+    #fig = plot.get_figure()
+    #fig.savefig("graph.png")
+    idx = pd.Index(history.keys())
+    durations = [int(history[i]['duration'])
+                 for i in history]
+    deltas = []
+    for i in range(len(history)):
+        try:
+            deltas.append((history.keys()[i] - history.keys()[i+1]).total_seconds())
+        except IndexError:
+            deltas.append(0)
+    dtf = pd.DataFrame({"Deltas": deltas, "Durations": durations}, index = idx)
+    return dtf
+
 def adivinar(history):
     """
     Naive guess of future nexts events based on deltas between past dates and
@@ -63,19 +86,11 @@ def adivinar(history):
     interval time when beast is alive. So it's 2 and 3 hours but between
     events' end time and start time.
     """
-    horas = extract_abs_hours(history)
-    s = pd.Series(horas)
-    s.plot()
-    if DEBUG:
-        for minutes in s.keys():
-            print datetime.time(minutes / 60, minutes % 60),
-            print s[minutes]
-    plot = s.plot()
-    fig = plot.get_figure()
-    fig.savefig("graph.png")
+    dtf = analize(history)
     try:
         last_event = history.keys()[0]
-        delta = last_event - history.keys()[1]
+        #delta = last_event - history.keys()[1]
+        delta = datetime.timedelta(sum(dtf.mean()) / (24*60*60))
     except IndexError:
         res = ["Not enough data"]
     else:
