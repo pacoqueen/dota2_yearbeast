@@ -6,7 +6,7 @@ from dateutil import tz
 from collections import OrderedDict
 import pandas as pd
 
-DEBUG = True
+DEBUG = False
 
 def parse_json_data(sdata):
     """
@@ -35,11 +35,11 @@ def get_json_data():
     data = parse_json_data(data)
     if DEBUG:
         for fh in reversed(data.keys()):
-            if fh >= datetime.datetime.now(tz.tzlocal()):
-                print "==>",
-            else:
-                print "-->",
-            print fh.strftime("%d/%m/%Y %H:%M")
+            if fh < datetime.datetime.now(tz.tzlocal()):
+                print "-->", fh.strftime("%d/%m/%Y %H:%M")
+    fh = data.keys()[0]
+    if fh >= datetime.datetime.now(tz.tzlocal()):
+        print "==>", fh.strftime("%d/%m/%Y %H:%M")
     return data
 
 def extract_abs_hours(history):
@@ -78,7 +78,9 @@ def analize(history):
     dtf = pd.DataFrame({"Deltas": deltas, "Durations": durations}, index = idx)
     return dtf
 
-def adivinar(history):
+def adivinar(history,
+             extrapolate_until = datetime.datetime(2015, 3, 2, 23, 59,
+                                                   tzinfo = tz.tzlocal())):
     """
     Naive guess of future nexts events based on deltas between past dates and
     confirmed new one (probably on future).
@@ -95,6 +97,10 @@ def adivinar(history):
         res = ["Not enough data"]
     else:
         res = [last_event + delta]
+        i = 2
+        while res[-1] <= extrapolate_until:
+            res.append(last_event + (delta * i))
+            i += 1
     return res
 
 def main():
